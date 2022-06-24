@@ -1,10 +1,10 @@
 import { ForbiddenException, Injectable } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
-import { AuthDto, AuthSignUpDto } from "./dto";
 import * as argon from 'argon2'
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
+import { AuthSignUpDto, AuthDto } from "./dto";
 @Injectable()
 export class AuthService {
     constructor(
@@ -13,7 +13,7 @@ export class AuthService {
         private config: ConfigService
     ) { }
 
-    async signup(dto: AuthDto) {
+    async signup(dto: AuthSignUpDto) {
         //generate the password hash
         const hash = await argon.hash(dto.password);
 
@@ -50,7 +50,7 @@ export class AuthService {
                 // handle error for duplicate fields
                 if (error.code === 'P2002') {
                     throw new ForbiddenException(
-                        'user allredy exixts'
+                        'user allredy exist'
                     )
                 }
 
@@ -61,15 +61,27 @@ export class AuthService {
 
     };
 
-    async signin(dto: AuthSignUpDto) {
+    async signin(dto: AuthDto) {
+
 
         // find user by email
-
         const userSignin = await this.prisma.user.findUnique({
             where: {
                 email: dto.email
             }
         });
+
+        // find user by phone
+        // const phoneuserSignin = await this.prisma.user.findUnique({
+        //     where: {
+        //         phone: dto.phone
+        //     }
+        // })
+
+
+
+
+
         // if user not found throw exception
         if (!userSignin) { throw new ForbiddenException('Wrong Credientials') };
 
@@ -84,7 +96,7 @@ export class AuthService {
         if (!passmatch) {
             throw new ForbiddenException('Wrong Credientials')
         };
-        // to hide hashed pass from return object
+        // to hide hashed pass from returned object
         // delete userSignin.hash;
 
 

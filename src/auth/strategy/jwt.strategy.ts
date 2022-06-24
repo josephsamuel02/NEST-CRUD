@@ -22,6 +22,9 @@ export class JwtStrategy extends PassportStrategy(
         })
     };
 
+
+    // this is my validation method to verify a user before granting access to the user information.
+    // according to docs
     async validate(payload: { sub: number, email: string }) {
         const user = await this.prisma.user.findUnique({
             where: {

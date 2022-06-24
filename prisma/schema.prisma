@@ -17,14 +17,17 @@ model User {
   updatedAt DateTime @updatedAt
 
   email String @unique
-  hash  String
+
+  phone String @unique
+
+  hash String
 
   name String
 
-  phone String
-
   surname String
-  books   Books[]
+
+  books Books[]
+
   @@map("users")
 }
 
@@ -40,6 +43,8 @@ model Books {
 
   userId Int
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // onDelete: Cascade -- makes sure that when a user is deleted its related book data is also deleted
   @@map("books")
 }

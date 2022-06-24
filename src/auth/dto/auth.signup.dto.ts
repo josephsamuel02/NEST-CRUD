@@ -10,5 +10,22 @@ export class AuthSignUpDto {
     @IsNotEmpty()
     password: string;
 
+    @IsString()
+    @IsNotEmpty()
+    name: string;
+
+    @IsString()
+    @IsNotEmpty()
+    phone: string;
+
+    @IsString()
+    @IsNotEmpty()
+    surname: string;
+
 
 }
+
+
+
+
+
