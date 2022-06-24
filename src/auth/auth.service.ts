@@ -1,10 +1,11 @@
 import { ForbiddenException, Injectable } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
 import * as argon from 'argon2'
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime";
+import { PrismaClientKnownRequestError, PrismaClientValidationError } from "@prisma/client/runtime";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import { AuthSignUpDto, AuthDto } from "./dto";
+
 @Injectable()
 export class AuthService {
     constructor(
@@ -63,13 +64,15 @@ export class AuthService {
 
     async signin(dto: AuthDto) {
 
+        //  find user by phone number
         if (dto.phone) {
             const phoneuserSignin = await this.prisma.user.findUnique({
                 where: {
                     phone: dto.phone
                 }
             });
-            //compare password 
+
+            //verify password aginst token 
             const phonePassmatch = await argon.verify(
                 phoneuserSignin.hash,
                 dto.password
@@ -79,8 +82,6 @@ export class AuthService {
 
             // return a signed user token
             return this.signToken(phoneuserSignin.id, phoneuserSignin.email);
-
-
 
         }
 
@@ -93,7 +94,7 @@ export class AuthService {
                 }
             });
 
-            //compare password 
+            //verify password aginst token 
             const passmatch = await argon.verify(
                 userSignin.hash,
                 dto.password
@@ -103,12 +104,13 @@ export class AuthService {
 
             // return a signed user token
             return this.signToken(userSignin.id, userSignin.email);
-
         }
 
 
-    }
 
+        if (!dto.email && !dto.phone) throw new ForbiddenException('unauthorized request body')
+
+    }
 
 
 
