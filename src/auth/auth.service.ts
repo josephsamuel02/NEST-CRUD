@@ -63,48 +63,54 @@ export class AuthService {
 
     async signin(dto: AuthDto) {
 
+        if (dto.phone) {
+            const phoneuserSignin = await this.prisma.user.findUnique({
+                where: {
+                    phone: dto.phone
+                }
+            });
+            //compare password 
+            const phonePassmatch = await argon.verify(
+                phoneuserSignin.hash,
+                dto.password
+            );
 
-        // find user by email
-        const userSignin = await this.prisma.user.findUnique({
-            where: {
-                email: dto.email
-            }
-        });
+            if (!phonePassmatch) throw new ForbiddenException('Invalid credentials')
 
-        // find user by phone
-        // const phoneuserSignin = await this.prisma.user.findUnique({
-        //     where: {
-        //         phone: dto.phone
-        //     }
-        // })
-
-
-
-
-
-        // if user not found throw exception
-        if (!userSignin) { throw new ForbiddenException('Wrong Credientials') };
+            // return a signed user token
+            return this.signToken(phoneuserSignin.id, phoneuserSignin.email);
 
 
 
-        //compare password
-        const passmatch = await argon.verify(
-            userSignin.hash,
-            dto.password
-        );
-
-        if (!passmatch) {
-            throw new ForbiddenException('Wrong Credientials')
-        };
-        // to hide hashed pass from returned object
-        // delete userSignin.hash;
+        }
 
 
+        if (dto.email) {
+            //  find user by email
+            const userSignin = await this.prisma.user.findUnique({
+                where: {
+                    email: dto.email
+                }
+            });
+
+            //compare password 
+            const passmatch = await argon.verify(
+                userSignin.hash,
+                dto.password
+            );
+
+            if (!passmatch) throw new ForbiddenException('Invalid credentials')
+
+            // return a signed user token
+            return this.signToken(userSignin.id, userSignin.email);
+
+        }
 
 
-        // return a signed user token
-        return this.signToken(userSignin.id, userSignin.email)
     }
+
+
+
 
     async signToken(userId: number, email: string): Promise<{ access_token: string }> {
         const payload = {
